@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use std::collections::HashMap;
 
 #[macroquad::main("Hack")]
 async fn main() {
@@ -7,6 +8,11 @@ async fn main() {
 
     let mut hold_frames = 0;
 
+    let mut files: HashMap<String, String> = HashMap::new();
+    files.insert(
+        String::from("passwords.txt"),
+        String::from("wi-fi router: pass: 1234"),
+    );
     loop {
         while let Some(c) = get_char_pressed() {
             if !c.is_control() {
@@ -23,21 +29,35 @@ async fn main() {
         }
         if is_key_pressed(KeyCode::Enter) {
             let parts: Vec<&str> = input.split_whitespace().collect();
-            history.push(input.clone());
-            match parts[0] {
-                "help" => history.push(String::from(
-                    "Hello, im terminal. Commands: help, ip, whoami, echo",
-                )),
-                "ip" => history.push(String::from("192.168.67.67")),
-                "whoami" => history.push(String::from("low-budget hacker.")),
-                "echo" => {
-                    if parts.len() > 1 {
-                        history.push(parts[1..].join(" "));
-                    } else {
-                        history.push(String::from("Usage: echo <text>"));
+            if !parts.is_empty() {
+                history.push(input.clone());
+                match parts[0] {
+                    "help" => history.push(String::from(
+                        "Hello, im terminal. Commands: help, ip, whoami, echo, ls, cat",
+                    )),
+                    "ip" => history.push(String::from("192.168.67.67")),
+                    "whoami" => history.push(String::from("low-budget hacker.")),
+                    "echo" => {
+                        if parts.len() > 1 {
+                            history.push(parts[1..].join(" "));
+                        } else {
+                            history.push(String::from("Usage: echo <text>"));
+                        }
                     }
+                    "ls" => {
+                        for name in files.keys() {
+                            history.push(name.clone());
+                        }
+                    }
+                    "cat" => match parts.get(1) {
+                        Some(&filename) => match files.get(filename) {
+                            Some(text) => history.push(format!("{}", text)),
+                            _ => history.push(String::from("File not found")),
+                        },
+                        _ => history.push(String::from("Invalid syntax: cat <filename>")),
+                    },
+                    _ => history.push(format!("Unknown command: {}", input)),
                 }
-                _ => history.push(format!("Unknown command: {}", input)),
             }
             input.clear();
         }
@@ -59,6 +79,9 @@ async fn main() {
                 GREEN,
             );
             otstup += 36.0;
+        }
+        if history.len() >= 40 {
+            history.remove(0);
         }
         next_frame().await
     }
