@@ -6,6 +6,7 @@ async fn main() {
     let mut history = Vec::new();
 
     let mut hold_frames = 0;
+
     loop {
         while let Some(c) = get_char_pressed() {
             if !c.is_control() {
@@ -21,14 +22,22 @@ async fn main() {
             hold_frames = 0;
         }
         if is_key_pressed(KeyCode::Enter) {
+            let parts: Vec<&str> = input.split_whitespace().collect();
             history.push(input.clone());
-            match input.trim() {
+            match parts[0] {
                 "help" => history.push(String::from(
-                    "Hello, im terminal. Commands: help, ip, whoami",
+                    "Hello, im terminal. Commands: help, ip, whoami, echo",
                 )),
                 "ip" => history.push(String::from("192.168.67.67")),
                 "whoami" => history.push(String::from("low-budget hacker.")),
-                _ => history.push(String::from("Unknown command")),
+                "echo" => {
+                    if parts.len() > 1 {
+                        history.push(parts[1..].join(" "));
+                    } else {
+                        history.push(String::from("Usage: echo <text>"));
+                    }
+                }
+                _ => history.push(format!("Unknown command: {}", input)),
             }
             input.clear();
         }
